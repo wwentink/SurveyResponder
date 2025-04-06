@@ -27,6 +27,7 @@ wheels/
 *.egg
 
 # Jupyter Notebook
+*.ipynb
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
@@ -66,7 +67,7 @@ _variables.yml
 *.tex
 ReadMe.html
 ReadMe_files/
-
+cannon_responses/
 *.csv
 !responses.csv
 *.json
