@@ -1,0 +1,94 @@
+{
+  "race": [
+    ["black", "who is black"],
+    ["white", "who is white"],
+    ["asian", "who is asian"],
+    ["multiracial", "who is multiracial"]
+  ],
+  "first_gen": [
+    ["first_gen", "who is first in their family to go to college"],
+    ["non_first_gen", "who is from a family whose members go to and do well in college"]
+  ],
+  "financial_status": [
+    ["pell_eligible", "who is or will likely be eligible for a pell grant"],
+    ["loans", "who has to take loans to be able to afford college"],
+    ["family_pays", "whose family can afford to pay for college"]
+  ],
+  "high_school": [
+    ["private", "who goes to or went to a private high school"],
+    ["public", "who goes to or went to a public high school"]
+  ],
+  "age": [
+    [16, "who is 16 years old"],
+    [17, "who is 17 years old"],
+    [18, "who is 18 years old"],
+    [19, "who is 19 years old"],
+    [20, "who is 20 years old"],
+    [21, "who is 21 years old"],
+    [22, "who is 22 years old"],
+    [23, "who is 23 years old"]
+  ],
+  "grades": [
+    ["low", "who earns low grades"],
+    ["modest", "who earns modest grades"],
+    ["good", "who earns good grades"],
+    ["great", "who earns great grades"]
+  ],
+  "trouble": [
+    ["sometimes", "who sometimes gets into trouble"],
+    ["rarely", "who rarely gets into trouble"],
+    ["often", "who often gets into trouble"],
+    ["never", "who never gets into trouble"]
+  ],
+  "gender": [
+    ["male", "who is male"],
+    ["female", "who is female"]
+  ],
+  "job_status": [
+    ["full_time", "who has a full time job"],
+    ["part_time", "who has a part time job"],
+    ["unemployed", "who does not have a job"]
+  ],
+  "alcohol": [
+    ["drinks", "who drinks alcohol"],
+    ["abstains", "who does not drink alcohol"]
+  ],
+  "smoking": [
+    ["smokes", "who smokes"],
+    ["vapes", "who vapes"],
+    ["neither", "who does not smoke or vape"]
+  ],
+  "hobbies": [
+    ["sports", "who loves sports"],
+    ["music", "who loves music"],
+    ["arts", "who loves arts"],
+    ["games", "who loves games"],
+    ["other", "who loves other hobbies"]
+  ],
+  "major": [
+    ["math", "who studies math"],
+    ["science", "who studies science"],
+    ["business", "who studies business"],
+    ["arts", "who studies arts"],
+    ["engineering", "who studies engineering"]
+  ],
+  "sociability": [
+    ["social", "who makes friends easily"],
+    ["reserved", "who struggles to make friends"]
+  ],
+  "homesickness": [
+    ["often", "who is often homesick"],
+    ["never", "who is never homesick"]
+  ],
+  "communication": [
+    ["apprehensive", "who experiences communication apprehension"],
+    ["excellent", "who is well known for speaking well in public"],
+    ["articulate", "who is generally articulate"],
+    ["struggles", "who sometimes has trouble articulating their thoughts"],
+    ["empty", ""]
+  ],
+  "honesty": [
+    ["always", "who is always honest on surveys and is also convinced that the responses will be confidential"],
+    ["usually", "who usually tells the truth and fully understands that responses will  confidential"]
+  ]
+}

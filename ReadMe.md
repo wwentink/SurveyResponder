@@ -1,0 +1,274 @@
+# SurveyResponder
+
+**Survey responses using LLMs** For researchers, developers, and psychometricians testing, scoring, and metrics evaluation.
+
+## 🚀 What Is SurveyResponder?
+
+**SurveyResponder** is a Python package and CLI tool that uses Large Language Models (LLMs), such as those accessed through [Ollama - ollama.com](https://ollama.com), to generate synthetic responses to survey instruments.
+
+Useful for:
+
+- Testing and validating **Likert-scale** or **multiple-choice** instruments.
+- Simulating responses across different **personas**.
+- Exploring **LLM behavior** when prompted with surveys.
+- Creating synthetic datasets for development and analysis.
+
+## 🔧 Features
+
+- ✅ Default Likert scale (`Strongly Disagree` to `Strongly Agree`, with neutral midpoint).
+- ✅ Custom response options (passed as a list).
+- ✅ Persona-driven simulation (via a JSON file with structured traits and descriptions).
+- ✅ Supports simple text files (one question per line).
+- ✅ Generates N responses per session.
+- ✅ Outputs a tidy CSV file.
+- ✅ Temperature setting for controlling LLM creativity.
+- ✅ Parameter logging for reproducibility.
+- ✅ Configurable LLM base URL for using remote instances.
+
+---
+
+## 📥 Installation
+
+SurveyResponder requires Python 3.7+ and [Ollama](https://ollama.com) for local LLM execution.
+
+### Prerequisites
+
+1) Install Python, Pandas, 
+  a) The Anaconda distribution is recommended.
+  b) Otherwise the lastest of Python can work.
+2) Install [Ollama](https://ollama.com/download) and/or [Annything LLM](https://anythingllm.com/).
+3) Pull an LLM model with Ollama (Ex: `ollama pull llava-llama3:latest`)
+
+### Installing SurveyResponder
+
+SurveyResponder is currently a single Python file (beta), installation is simple:
+
+#### Windows
+
+```powershell
+# Download the Python file
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/SurveyResponder.py" -OutFile "SurveyResponder.py"
+
+# Download example files (optional)
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/questions.txt" -OutFile "questions.txt"
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/persona.json" -OutFile "persona.json"
+```
+
+#### macOS/Linux
+
+```bash
+# Download the Python file
+curl -O https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/SurveyResponder.py
+
+# Download example files (optional)
+curl -O https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/questions.txt
+curl -O https://raw.githubusercontent.com/adamrossnelson/SurveyResponder/main/persona.json
+```
+
+### Verifying Installation
+
+To use SurveyResponder, import it in your Python code:
+
+```python
+# Import the SurveyResponder class
+from SurveyResponder import SurveyResponder
+
+# Create a responder with example data
+responder = SurveyResponder()
+
+# Make sure Ollama is running before executing
+df = responder.run_write('responses.csv')
+print(f"Generated {len(df)} responses successfully!")
+```
+
+---
+
+## 🧪 Quickstart
+
+### As a Python module
+
+```python
+from surveyresponder import SurveyResponder
+
+# Basic usage with defaults
+responder = SurveyResponder()
+df = responder.run()
+df.to_csv("results.csv", index=False)
+
+# Advanced usage with all parameters
+responder = SurveyResponder(
+    questions_path="questions.txt",
+    persona_path="persona.json",
+    model_name="llava-llama3:latest",
+    response_options=["Never", "Rarely", "Sometimes", "Often", "Always"],
+    num_responses=100,
+    temperature=1.0,
+    base_url="http://localhost:11434/api/generate"
+)
+
+# Option 1: Get DataFrame only
+df = responder.run()
+
+# Option 2: Get DataFrame and write to CSV file (records save as they're generated)
+#           Also creates results_params.json with configuration parameters
+df = responder.run_write("results.csv")
+
+```
+
+### Preview Personas and Prompts
+
+SurveyResponder includes methods to preview the personas and prompts that will be used (can be useful in verifying proper `persona.json` specifications):
+
+```python
+# Create a SurveyResponder
+responder = SurveyResponder()
+
+# Generate a random persona description
+persona = responder.example_persona()
+print(persona)
+# Output: "You are a someone who is multiracial, who is from a family whose members go to and do well in college..." 
+
+# Generate multiple personas
+personas = responder.example_persona(npersonas=3)
+for i, p in enumerate(personas):
+    print(f"Persona {i+1}: {p}")
+
+# Generate an example prompt using the first question in questions.txt
+prompt = responder.example_prompt()
+print(prompt)
+
+# Generate an example prompt with a custom question
+prompt = responder.example_prompt("I enjoy Python programming.")
+print(prompt)
+```
+
+### As a CLI tool (To Be Implemented)
+
+*Anticipated CLI syntax here:*
+
+```bash
+surveyresponder run \
+  --questions questions.txt \
+  --persona persona.json \
+  --model llava-llama3:latest \
+  --num-responses 100 \
+  --output results.csv \
+  --temperature 1.0 \
+  --response-options "Never,Rarely,Sometimes,Often,Always"
+```
+
+---
+
+## 📁 File Formats
+
+### Input: `questions.txt`
+
+Plain text file, one survey question per line:
+
+```
+I enjoy working in teams.
+I prefer a structured schedule.
+I feel confident in my abilities.
+```
+
+### Input: `persona.json`
+
+Each key becomes a column in the output CSV. Each value is a list of tuples. The first element is recorded in the CSV. The second element is included in the LLM prompt.
+
+```json
+{
+  "age": [[16, "is 16 years old"], [18, "is 18 years old"], [20, "is 20 years old"]],
+  "gender": [["male", "is male"], ["female", "is female"]],
+  "hobbies": [["art", "who enjoys making art"], ["music", "who enjoys music"]]
+}
+```
+
+### Output: `results.csv`
+
+Example format:
+
+| resid    | age | gender | hobbies | Q1       | Q2      | Q3             |
+| -------- | --- | ------ | ------- | -------- | ------- | -------------- |
+| 1        | 18  | male   | music   | Agree    | Neutral | Strongly Agree |
+| 2        | 20  | female | art     | Disagree | Agree   | Agree          |
+
+### Output: `results_params.json`
+
+Configuration parameters file for reproducibility:
+
+```json
+{
+  "questions_path": "questions.txt",
+  "persona_path": "persona.json",
+  "model_name": "llava-llama3:latest",
+  "base_url": "http://localhost:11434/api/generate",
+  "num_responses": 100,
+  "temperature": 1.0,
+  "response_options": ["Never", "Rarely", "Sometimes", "Often", "Always"],
+  "run_date": "2025-04-03 21:04:23.123456",
+  "num_questions": 3
+}
+```
+
+---
+
+## 🔍 Roadmap
+
+The following features are under consideration for future releases:
+
+- **Support for open-ended responses**: Allow questions that require textual responses in addition to multiple-choice options.
+- **Persona templates**: Provide predefined personas for ease of use.
+- **Expanded persona logic**: Include sampling strategies, weights, and dependencies between persona traits.
+- **Question metadata support**: Allow users to include additional metadata about questions (e.g., topic, valence) to inform response generation.
+- **Batch processing of surveys**: Enable running multiple different surveys or question sets in one go.
+- **Psychometric summaries**:
+  - Perform exploratory factor analysis (EFA) and provide outputs.
+  - Estimate internal consistency metrics (e.g., Cronbach’s alpha).
+  - Visualize response patterns.
+- **Evaluation module**: Compare LLM-generated responses with real human response distributions.
+- **Cloud deployment support**: Make the tool available as a web service or via API.
+
+Contributions and feature requests are welcome via GitHub Issues.
+
+---
+
+## 👨‍🔬 Intended Use Cases
+
+- Simulating data for **scoring algorithm validation**
+- Explore how LLMs might (or might not) reflect or **replicate human biases**
+- Generating **mock data** for dashboards or demonstrations
+
+---
+
+## 💬 Contributing
+
+Pull requests welcome! Please open an issue first to discuss major changes.
+
+---
+
+## 📚 Citation
+
+If you use SurveyResponder in your research, please cite it using the following formats:
+
+### BibTeX
+
+```bibtex
+@software{nelson2025surveyresponder,
+  author       = {Nelson, Adam Ross},
+  title        = {SurveyResponder: Generate synthetic survey responses using LLMs},
+  year         = 2025,
+  publisher    = {Up Level Data, LLC},
+  version      = {1.0},
+  url          = {https://github.com/adamrossnelson/SurveyResponder}
+}
+```
+
+### APA Format
+
+Nelson, A. R. (2025). *SurveyResponder: Generate synthetic survey responses using LLMs* (Version 1.0) [Computer software]. Up Level Data, LLC. https://github.com/adamrossnelson/SurveyResponder
+
+---
+
+## 📄 License
+
+MIT License. See `LICENSE` file for details.
