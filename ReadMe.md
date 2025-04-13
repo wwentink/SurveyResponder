@@ -4,7 +4,7 @@
 
 ## 🚀 What Is SurveyResponder?
 
-**SurveyResponder** is a Python package and CLI tool that uses Large Language Models (LLMs), such as those accessed through [Ollama - ollama.com](https://ollama.com), to generate synthetic responses to survey instruments.
+**SurveyResponder** is a Python package and CLI tool that uses Large Language Models (LLMs), such as those accessed through [Ollama - ollama.com](https://ollama.com), to generate synthetic survey instrument responses.
 
 Useful for:
 
