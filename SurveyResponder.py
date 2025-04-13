@@ -346,6 +346,9 @@ Be sure to consider the  full range of options including:
         """
         # Check if file exists and update filename with enumeration if needed
         import os
+        import psutil
+        import platform
+        import sys
         base_name, extension = os.path.splitext(output_file) if '.' in output_file else (output_file, '')
         counter = 1
         final_output_file = output_file
@@ -369,6 +372,22 @@ Be sure to consider the  full range of options including:
         # Save parameters to JSON file for reproducibility
         params_file = output_file.rsplit('.', 1)[0] + "_params.json" if '.' in output_file else output_file + "_params.json"
         
+        # Computer stats (GB Ram)
+        try:
+            computer_memory = psutil.virtual_memory().total / 1024  / 1024 / 1024
+        except:
+            computer_memory = "ERROR"
+        # Computer OS + Version
+        try:
+            computer_os = f'Operating System: {platform.system()} Version {platform.version()}'
+        except:
+            computer_os = "ERROR"
+        # Computer Python Version
+        try:
+            computer_python = sys.version
+        except:
+            computer_python = "ERROR"
+
         # Collect parameters
         params = {
             "questions_path": self.questions_path,
@@ -381,7 +400,10 @@ Be sure to consider the  full range of options including:
             "run_date": str(pd.Timestamp.now()),
             "num_questions": len(self.questions),
             "questions": self.questions,
-            "persona_dictionary": self.persona_dict
+            "persona_dictionary": self.persona_dict,
+            "computer_memory":computer_memory,
+            "computer_os":computer_os,
+            "computer_python":computer_python
         }
         
         # Write parameters to JSON file
@@ -424,38 +446,13 @@ Be sure to consider the  full range of options including:
         return df
 
 if __name__ == "__main__":
-    # Example 1: Using default Likert scale
-    responder_default = SurveyResponder(
-        questions_path="questions.txt",
-        persona_path="persona.json",
-        model_name="llava-llama3:latest",
-        num_responses=5
-    )
-    
-    # Example 2: Using custom response options
-    responder_custom = SurveyResponder(
-        questions_path="questions.txt",
-        persona_path="persona.json",
-        model_name="llava-llama3:latest",
-        response_options=["Never", "Rarely", 
-            "Sometimes", "Often", "Always"],
-        num_responses=5
-    )
-    
-    # Example 3: Using a different base URL (e.g., for a remote Ollama instance)
-    responder_remote = SurveyResponder(
-        questions_path="questions.txt",
-        persona_path="persona.json",
-        model_name="mistral",
-        base_url="http://remote-server:11434/api/generate"
-    )
-    
-    # Example Call 1a: Get a DataFrame and write to a file as responses are generated
-    df = responder_default.run_write('survey_responses.csv')
-    
-    # Example Call 1b: Get a DataFrame without writing to a file
-    # df = responder_default.run()
-    # df.sample()
-    
-    # Example Call 2: Modifed response options
-    # df = responder_custom.run_write('survey_responses_custom.csv')
+    print("""
+    SurveyResponder
+    Survey responses using LLMs For researchers, developers, and psychometricians testing, scoring, and metrics evaluation.
+
+    🚀 What Is SurveyResponder?
+    SurveyResponder is a Python package and CLI tool that uses Large Language Models (LLMs), such as those accessed through Ollama - ollama.com, to generate synthetic responses to survey instruments.
+
+    More infofomation here:
+    https://github.com/adamrossnelson/SurveyResponder
+    """)
