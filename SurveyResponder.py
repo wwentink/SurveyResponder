@@ -65,7 +65,8 @@ class SurveyResponder:
                  response_options: Optional[List[str]] = None,
                  num_responses: int = 10,
                  temperature: float = 1.0,
-                 base_url: str = "http://localhost:11434/api/generate"):
+                 base_url: str = "http://localhost:11434/api/generate",
+                 max_try: int = 2):
         """Initialize the SurveyResponder with specified paths and parameters.
         
         Args:
@@ -76,6 +77,7 @@ class SurveyResponder:
             num_responses (int): Number of responses to generate. Defaults to 10.
             temperature (float): Temperature setting for LLM response generation. Defaults to 1.0.
             base_url (str): URL for the Ollama API. Defaults to "http://localhost:11434/api/generate".
+            max_try (int): Maximum number of consecutive errors before early termination.
         """
         self.questions_path = questions_path
         self.persona_path = persona_path
@@ -83,6 +85,7 @@ class SurveyResponder:
         self.base_url = base_url
         self.num_responses = num_responses
         self.temperature = temperature
+        self.max_try = max_try
         
         # Load questions and persona dictionary
         self.questions = load_questions(questions_path)
@@ -142,7 +145,7 @@ Please select ONE of the following responses that best matches your opinion:
 Respond with ONLY one of the above options, nothing else.
 
 Be sure to consider the  full range of options including: 
-'{self.response_options[0]}', {self.response_options[-1]}, and all items in between."""
+'{self.response_options[0]}' and '{self.response_options[-1]}' and all items in between."""
     
     def example_prompt(self, question: Optional[str] = None) -> str:
         """Generate and return an example prompt using a random persona.
@@ -228,6 +231,13 @@ Be sure to consider the  full range of options including:
             result = response.json()
             return result['response'].strip()
             
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                raise ConnectionError(
+                    f"404 Error: Common reason is model ('{self.model_name}') not found. "
+                    "This may mean the model name is not available. Try 'ollama pull <model_name>'"
+                    "or 'ollama list' to check available models with 'ollama list'")
+            raise ConnectionError(f"HTTP Error: {str(e)}")
         except requests.exceptions.RequestException as e:
             raise ConnectionError(f"Failed to connect to Ollama: {str(e)}")
 
@@ -241,28 +251,20 @@ Be sure to consider the  full range of options including:
             
         Returns:
             Dict: Dictionary containing 'question', 'response', and other metadata
-        """
-        try:
-            prompt = self._generate_prompt(question, persona_descriptions)
-            response = self.get_response(question, persona_descriptions)
             
-            return {
-                'question': question,
-                'response': response,
-                'prompt': prompt,
-                'persona_traits': persona_traits,
-                'persona_descriptions': persona_descriptions
-            }
-        except Exception as e:
-            warnings.warn(f"Error processing question '{question}': {str(e)}")
-            return {
-                'question': question,
-                'response': 'ERROR',
-                'prompt': prompt,
-                'persona_traits': persona_traits,
-                'persona_descriptions': persona_descriptions,
-                'error': str(e)
-            }
+        Raises:
+            Exception: If there is an error processing the question or getting a response
+        """
+        prompt = self._generate_prompt(question, persona_descriptions)
+        response = self.get_response(question, persona_descriptions)
+        
+        return {
+            'question': question,
+            'response': response,
+            'prompt': prompt,
+            'persona_traits': persona_traits,
+            'persona_descriptions': persona_descriptions
+        }
 
     def get_settings(self) -> Dict:
         """Get the current settings of the SurveyResponder instance.
@@ -285,18 +287,24 @@ Be sure to consider the  full range of options including:
     def run(self) -> pd.DataFrame:
         """Generate synthetic survey responses and return as a DataFrame.
         
-        If any errors occur during generation, warnings will be issued but processing will continue 
-        for other responses. The DataFrame will include all successfully generated responses.
-        Progress is displayed using a progress bar.
+        If any errors occur during generation, warnings will be issued. Processing will stop
+        if max_try consecutive errors are encountered. The DataFrame will include all
+        successfully generated responses up to that point.
         
         Returns:
             pd.DataFrame: DataFrame containing all generated responses
+            
+        Raises:
+            RuntimeError: If no valid responses could be generated
         """
         # Create header for the dataframe
         columns = ["resid", "model"] + list(self.persona_dict.keys()) + [f"Q{i+1}" for i in range(len(self.questions))]
         
         # Initialize empty lists to store the data
         data = []
+        
+        # Initialize error counter
+        error_count = 0
         
         # Generate responses
         for n in tqdm(range(self.num_responses), desc="Generating responses", unit="response"):
@@ -314,16 +322,46 @@ Be sure to consider the  full range of options including:
                 for question in self.questions:
                     try:
                         result = self.process_question(question, persona_traits, persona_descriptions)
-                        row_data.append(result['response'] if result['response'] else "ERROR")
+                        row_data.append(result.get('response', 'ERROR'))
+                        error_count = 0 
                     except Exception as e:
-                        warnings.warn(f"Error processing question for respondent {resid}: {str(e)}")
+                        error_count += 1
+                        warnings.warn(f"Error processing question '{question}': {str(e)}")
                         row_data.append("ERROR")
-                
-                # Add the row to our data
-                data.append(row_data)
+                        
+                        if error_count >= self.max_try:
+                            warnings.warn(
+                                f"Stopping after {error_count} consecutive errors. "
+                                f"Returning {len(data)} successful responses."
+                            )
+                            # Pad row_data with 'INCOMPLETE' if it's shorter than expected
+                            if len(row_data) < len(columns):
+                                row_data.extend(['INCOMPLETE'] * (len(columns) - len(row_data)))
+                            # Add partial response if we have any answers
+                            if any(x != "ERROR" for x in row_data):
+                                data.append(row_data)
+                            break
+
+                if error_count < self.max_try:
+                    data.append(row_data)
+                else:
+                    break
                 
             except Exception as e:
+                error_count += 1
                 warnings.warn(f"Error generating response {n+1}: {str(e)}")
+                if error_count >= self.max_try:
+                    warnings.warn(
+                        f"Stopping after {error_count} consecutive errors. "
+                        f"Returning {len(data)} successful responses."
+                    )
+                    break
+        
+        if not data:
+            raise RuntimeError(
+                f"Failed to generate any valid responses after {error_count} consecutive errors. "
+                "Check if Ollama is running and the model is available."
+            )
         
         # Create DataFrame
         df = pd.DataFrame(data, columns=columns)
@@ -410,6 +448,9 @@ Be sure to consider the  full range of options including:
         with open(params_file, 'w') as f:
             json.dump(params, f, indent=2)
         
+        # Initialize error counter
+        error_count = 0
+        
         # Generate responses
         for n in tqdm(range(self.num_responses), desc="Generating responses", unit="response"):
             try:
@@ -426,20 +467,50 @@ Be sure to consider the  full range of options including:
                 for question in self.questions:
                     try:
                         result = self.process_question(question, persona_traits, persona_descriptions)
-                        row_data.append(result['response'] if result['response'] else "ERROR")
+                        row_data.append(result.get('response', 'ERROR'))
+                        error_count = 0 
                     except Exception as e:
-                        warnings.warn(f"Error processing question for respondent {resid}: {str(e)}")
+                        error_count += 1
+                        warnings.warn(f"Error processing question '{question}': {str(e)}")
                         row_data.append("ERROR")
-                
-                # Add the row to our data for the DataFrame
-                data.append(row_data)
-                
-                # Write the row to the output file immediately
-                with open(output_file, 'a') as f:
-                    f.write(",".join([str(item) for item in row_data]) + "\n")
+                        
+                        if error_count >= self.max_try:
+                            warnings.warn(
+                                f"Stopping after {error_count} consecutive errors. "
+                                f"Returning {len(data)} successful responses."
+                            )
+                            # Pad row_data with 'INCOMPLETE' if it's shorter than expected
+                            if len(row_data) < len(columns):
+                                row_data.extend(['INCOMPLETE'] * (len(columns) - len(row_data)))
+                            # Add partial response if we have any answers
+                            if any(x != "ERROR" for x in row_data):
+                                data.append(row_data)
+                                with open(output_file, 'a') as f:
+                                    f.write(",".join([str(x) for x in row_data]) + "\n")
+                            break
+
+                if error_count < self.max_try:
+                    data.append(row_data)
+                    with open(output_file, 'a') as f:
+                        f.write(",".join([str(x) for x in row_data]) + "\n")
+                else:
+                    break
                 
             except Exception as e:
+                error_count += 1
                 warnings.warn(f"Error generating response {n+1}: {str(e)}")
+                if error_count >= self.max_try:
+                    warnings.warn(
+                        f"Stopping after {error_count} consecutive errors. "
+                        f"Returning {len(data)} successful responses."
+                    )
+                    break
+        
+        if not data:
+            raise RuntimeError(
+                f"Failed to generate any valid responses after {error_count} consecutive errors. "
+                "Check if Ollama is running and the model is available."
+            )
         
         # Create and return DataFrame from all successfully collected data
         df = pd.DataFrame(data, columns=columns)

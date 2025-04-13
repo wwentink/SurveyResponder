@@ -56,18 +56,15 @@ def ollama_available():
 @pytest.fixture
 def mock_ollama_response(monkeypatch):
     """Mock the Ollama API response."""
-    class MockResponse:
-        def __init__(self, *args, **kwargs):
-            pass
-        
-        def json(self):
-            return {"response": "agree"}
-        
-        def raise_for_status(self):
-            pass
-    
     def mock_post(*args, **kwargs):
+        # Simple mock response object with proper method definitions
+        class MockResponse:
+            def json(self):
+                return {"response": "agree"}
+            
+            def raise_for_status(self):
+                pass
+        
         return MockResponse()
     
-    import requests
     monkeypatch.setattr(requests, "post", mock_post)

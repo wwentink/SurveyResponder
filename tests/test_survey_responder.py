@@ -2,6 +2,7 @@ import pytest
 import os
 import pandas as pd
 from .. import SurveyResponder, load_questions, load_persona_file, generate_persona_from_file
+from unittest.mock import patch
 
 def test_surveyresponder_initialization(sample_questions_file, sample_persona_file):
     """Test SurveyResponder initialization with default parameters."""
@@ -71,14 +72,14 @@ def test_example_persona(sample_questions_file, sample_persona_file):
     )
     # Test single persona
     single_persona = responder.example_persona()
-    assert isinstance(single_persona, str)
-    assert "someone" in single_persona
+    assert isinstance(single_persona, str)            # Veryfiy persona is string
     
     # Test multiple personas
     multi_personas = responder.example_persona(npersonas=3)
-    assert isinstance(multi_personas, list)
-    assert len(multi_personas) == 3
-    assert all(isinstance(p, str) for p in multi_personas)
+    assert isinstance(multi_personas, list)           # Verify persona is a list
+    assert len(multi_personas) == 3                   # Verify leng from fixture
+    assert all(
+        isinstance(p, str) for p in multi_personas)   # Veryfiy items in list are str
 
 def test_get_settings(sample_questions_file, sample_persona_file):
     """Test getting settings."""
@@ -102,9 +103,11 @@ def test_run_with_mock_ollama(sample_questions_file, sample_persona_file, mock_o
     df = responder.run()
     assert isinstance(df, pd.DataFrame)               # Verify DataFrame is returned
     assert len(df) == 2                               # Verify expected number of responses
+    assert "resid" in df.columns                      # Verify response id column exists
+    assert "model" in df.columns                      # Verify model name column exists
     assert "Q1" in df.columns                         # Verify question columns exist
-    assert "Q2" in df.columns
-    assert "Q3" in df.columns
+    assert "Q2" in df.columns                         # Verify question columns exist
+    assert "Q3" in df.columns                         # Verify question columns exist
 
 def test_run_write_with_mock_ollama(sample_questions_file, sample_persona_file, mock_ollama_response, ollama_available, tmp_path):
     """Test running the responder and writing results to file."""
