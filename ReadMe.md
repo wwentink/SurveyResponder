@@ -112,7 +112,90 @@ df = responder.run()
 # Option 2: Get DataFrame and write to CSV file (records save as they're generated)
 #           Also creates results_params.json with configuration parameters
 df = responder.run_write("results.csv")
+```
+### As a Google Colab / Jupyter Notebook
+#### [Open SurveyResponder in Colab](https://colab.research.google.com/drive/1LyVCeYnH33CTQzyo-F0kKvjYv-8jGjDB?usp=sharing)
 
+### As a CLI tool (To Be Implemented)
+
+*Anticipated CLI syntax here:*
+
+```bash
+surveyresponder run \
+  --questions questions.txt \
+  --persona persona.json \
+  --model llava-llama3:latest \
+  --num-responses 100 \
+  --output results.csv \
+  --temperature 1.0 \
+  --response-options "Never,Rarely,Sometimes,Often,Always"
+```
+
+---
+
+## 🛠️ Customization Options
+Below are a few examples of ways to customize and tailor the Survey Responder for specific use cases:
+
+### Changing LLM Models
+
+To test how responses differ among LLM models, you can change the LLM by pulling it from Ollama
+
+A full list of available LLM's are found here: https://ollama.com/library
+
+```python
+# Example: pull mistral and use it in the responder
+ollama pull mistral:latest
+
+from SurveyResponder import SurveyResponder
+responder = SurveyResponder(
+    questions_path="questions.txt",
+    persona_path="persona.json",
+    model_name="mistral:latest", # Changed to mistral
+    response_options=["Disagree", "Slightly Disagree", "Neutral", "Slightly Agree", "Agree"],
+    num_responses=100,
+    temperature=1.0,
+    base_url="http://localhost:11434/api/generate"
+)
+```
+### Editing Questions and Personas
+SurveyResponder uses two input files:
+
+`questions.txt` — plain text, one survey question per line.
+
+`persona.json` — a dictionary of traits where each key becomes a column and each value is a list of [value, description] pairs.
+
+You can edit these files manually in a file browser, text editor, or like this:
+```python
+# Add a new question to questions.txt
+with open("questions.txt", "a") as f:
+    f.write("\nI feel confident solving programming problems.")
+
+# Add a new trait to persona.json
+import json
+
+with open("persona.json", "r") as f:
+    personas = json.load(f)
+
+# Add a new gender trait
+personas["student_status"] = personas.get("student_status", [])
+personas["student_status"].append(["full-time", "who is a full-time student"])
+
+# Save the changes
+with open("persona.json", "w") as f:
+    json.dump(personas, f, indent=2)
+```
+### Changing Response Options
+The default likert scale can be changed to more accurately fit specific questions and personas, and it can be done via the following:
+```python
+responder = SurveyResponder(
+    questions_path="questions.txt",
+    persona_path="persona.json",
+    model_name="mistral:latest",
+    response_options=["Never", "Rarely", "Often", "Always"], # Changed to 4 point likert scale
+    num_responses=100,
+    temperature=1.0,
+    base_url="http://localhost:11434/api/generate"
+)
 ```
 
 ### Preview Personas and Prompts
@@ -141,22 +224,6 @@ print(prompt)
 prompt = responder.example_prompt("I enjoy Python programming.")
 print(prompt)
 ```
-
-### As a CLI tool (To Be Implemented)
-
-*Anticipated CLI syntax here:*
-
-```bash
-surveyresponder run \
-  --questions questions.txt \
-  --persona persona.json \
-  --model llava-llama3:latest \
-  --num-responses 100 \
-  --output results.csv \
-  --temperature 1.0 \
-  --response-options "Never,Rarely,Sometimes,Often,Always"
-```
-
 ---
 
 ## 📁 File Formats
