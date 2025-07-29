@@ -176,7 +176,7 @@ import json
 with open("persona.json", "r") as f:
     personas = json.load(f)
 
-# Add a new gender trait
+# Add a new student status trait
 personas["student_status"] = personas.get("student_status", [])
 personas["student_status"].append(["full-time", "who is a full-time student"])
 
