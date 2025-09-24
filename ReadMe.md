@@ -13,6 +13,8 @@ Useful for:
 - Exploring **LLM behavior** when prompted with surveys.
 - Creating synthetic datasets for development and analysis.
 
+A small collection of previous responses are available via [Google Drive](https://drive.google.com/drive/folders/11nAmH9aUoeg9vzKYqT1hXYd_GJxay_lA?usp=sharing).
+
 ## 🔧 Features
 
 - ✅ Default Likert scale (`Strongly Disagree` to `Strongly Agree`, with neutral midpoint).
