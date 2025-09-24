@@ -1,0 +1,53 @@
+{
+  "race": [
+    ["white", "who is white"]
+  ],
+  "first_gen": [
+    ["non_first_gen", "who is from a family whose members go to and do well in college"]
+  ],
+  "financial_status": [
+    ["family_pays", "whose family can afford to pay for college"]
+  ],
+  "high_school": [
+    ["public", "who goes to or went to a public high school"]
+  ],
+  "age": [
+    [19, "who is 19 years old"]
+  ],
+  "grades": [
+    ["good", "who earns good grades"]
+  ],
+  "trouble": [
+    ["rarely", "who rarely gets into trouble"]
+  ],
+  "gender": [
+    ["male", "who is male"]
+  ],
+  "job_status": [
+    ["part_time", "who has a part time job"]
+  ],
+  "alcohol": [
+    ["drinks", "who drinks alcohol"]
+  ],
+  "smoking": [
+    ["neither", "who does not smoke or vape"]
+  ],
+  "hobbies": [
+    ["sports", "who loves sports"]
+  ],
+  "major": [
+    ["engineering", "who studies engineering"]
+  ],
+  "sociability": [
+    ["social", "who makes friends easily"]
+  ],
+  "homesickness": [
+    ["rarely", "who is rarely homesick"]
+  ],
+  "communication": [
+    ["articulate", "who is generally articulate"]
+  ],
+  "honesty": [
+    ["usually", "who usually tells the truth and fully understands that responses will  confidential"]
+  ]
+}
